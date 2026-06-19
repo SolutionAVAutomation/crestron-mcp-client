@@ -16,6 +16,16 @@ import * as crypto from "node:crypto";
  *  as ?mac= so the storefront/trial is bound to this processor. */
 const PORTAL_URL = process.env.CRESTRON_PORTAL_URL || "https://solutionav.com.au/crestron-mcp/";
 const TRIAL_URL = process.env.CRESTRON_TRIAL_URL || "https://license.solutionav.com.au/trial";
+/** Host of the trial/licensing server, surfaced in the trial result so the assistant can say
+ *  where a trial came from. The fetch happens inside this client, below the tool boundary, so
+ *  the model can't otherwise see that an online server was involved. */
+const TRIAL_HOST = (() => {
+  try {
+    return new URL(TRIAL_URL).host;
+  } catch {
+    return TRIAL_URL;
+  }
+})();
 
 /** After a control action, read the device's STATE back so the result carries the real outcome.
  *  The model reliably reads tool results but rarely queries on its own, so we push the feedback to
@@ -490,6 +500,12 @@ export class CrestronConnection {
       trial_seq: data.trial_seq ?? null,
       trial_max: data.trial_max ?? null,
       licensed_to: act.licensed_to ?? "Trial",
+      // Provenance so the assistant answers "how/where did this happen" from data, not by
+      // guessing: the HTTPS fetch to the licensing server happens inside this client, which the
+      // model can't see, so name it explicitly here.
+      issued_by: TRIAL_HOST,
+      data_sent: "processor MAC only",
+      stored: "on the processor (persists across reboots)",
     };
   }
 
