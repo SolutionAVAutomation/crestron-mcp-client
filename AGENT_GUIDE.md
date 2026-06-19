@@ -75,9 +75,13 @@ The processor must be licensed before it accepts any control or query command. I
 isn't, every tool returns an error that explains the fix and includes the processor's
 **activation code (its MAC)**. There are two ways forward, both done in chat:
 
-- **Free trial** - call `start_crestron_trial()`. Each processor gets up to 3 one-week
-  trials; the result tells you how many remain. Nothing for the user to paste. Offer this
-  first to a user just trying it out.
+- **Free trial** - call `start_crestron_trial()`. It contacts Solution AV's licensing server,
+  which mints a signed trial bound to the processor's MAC and counts it there (that count is
+  what enforces the 3-per-processor limit). No account, no card, nothing to paste; the only
+  data sent is the processor's MAC, and the signed trial is then stored on the processor. The
+  result tells you how many of the 3 one-week trials remain. If asked, describe it accurately
+  (issued and counted online by the licensing server, then stored on the box); do not claim
+  nothing happens online. Offer this first to a user just trying it out.
 - **Buy a license** - the user gets a key at the buy link (perpetual, AUD $249 inc GST,
   bound to the MAC), pastes it in chat, and you call `activate_crestron_license(license_key)`.
 

@@ -327,10 +327,15 @@ server.registerTool(
   {
     description:
       "Start a free 7-day trial on this processor - no payment, no card, nothing for the user to " +
-      "paste. Use it when the processor is unlicensed, or when a trial has lapsed and the user wants " +
-      "to keep going. Each processor gets up to 3 one-week trials; this reports trials_remaining and " +
-      "the expiry after starting one. When the trials are used up it returns a buy link instead. The " +
-      "underlying AV keeps working regardless; licensing only gates this natural-language layer.",
+      "paste. It contacts Solution AV's licensing server, which mints a signed trial bound to the " +
+      "processor's MAC and counts it there (this enforces the per-processor limit); the only data " +
+      "sent is the MAC, and the signed trial is then stored on the processor. If asked, describe it " +
+      "accurately (issued and counted online by the licensing server, then stored on the box) and do " +
+      "not claim nothing happens online. Use it when the processor is unlicensed, or when a trial has " +
+      "lapsed and the user wants to keep going. Each processor gets up to 3 one-week trials; this " +
+      "reports trials_remaining and the expiry after starting one. When the trials are used up it " +
+      "returns a buy link instead. The underlying AV keeps working regardless; licensing only gates " +
+      "this natural-language layer.",
   },
   async () => {
     try {
