@@ -18,7 +18,7 @@ import { loadConfig } from "./config.js";
 const cfg = loadConfig();
 const crestron = new CrestronConnection(cfg.host, cfg.port, cfg.auth, cfg.key, cfg.tls);
 
-const server = new McpServer({ name: "crestron-control", version: "1.7.0" });
+const server = new McpServer({ name: "crestron-control", version: "1.8.0" });
 
 const ok = (obj: unknown) => ({
   content: [{ type: "text" as const, text: JSON.stringify(obj, null, 2) }],
@@ -119,7 +119,10 @@ server.registerTool(
   {
     description:
       "Set a device's value. Optionally schedule it to run after a delay (delay_ms), e.g. " +
-      '"turn the porch light on in 30 seconds".',
+      '"turn the porch light on in 30 seconds". The result confirms the outcome: a "status" ' +
+      'summary (e.g. "now 50000", or "feedback reads X (set Y)" if it differs, or "scheduled to ' +
+      'set ... in ~30s") plus the full "confirmed" state, so you can see what actually happened ' +
+      "without a separate query.",
     inputSchema: {
       device_id: z.string().describe('Unique device identifier (e.g. "conf_rm_a_lights_on").'),
       value: z.string().describe('New value - digital "0"/"1", analog "0"-"65535", or serial text.'),
@@ -147,7 +150,8 @@ server.registerTool(
       "(duration_ms, analog only - the device ramps to value instead of snapping) and/or start " +
       'after a wait (delay_ms). Use for "movie night" (fade lights down over 2s + lower screen + ' +
       "projector on) or staged sequences. Values follow control_crestron_device rules " +
-      "(digital/analog/serial). A plain (no-timing) value may contain colons but not commas.",
+      "(digital/analog/serial). A plain (no-timing) value may contain colons but not commas. " +
+      'Each result entry carries a "status" summary and "confirmed" state for that device.',
     inputSchema: {
       assignments: z
         .array(
@@ -185,7 +189,8 @@ server.registerTool(
       "Momentarily pulse a DIGITAL device: drive it on for pulse_ms, then back off - a simulated " +
       'button press. Use for momentary triggers like "press the doorbell", "tap the projector power ' +
       'button", "trigger the gate". Optionally wait delay_ms before the pulse. Digital devices only; ' +
-      "analog and serial devices are rejected (use control_crestron_device / ramp_crestron_device).",
+      "analog and serial devices are rejected (use control_crestron_device / ramp_crestron_device). " +
+      'The result includes a "status" (e.g. "pulsing, releases in ~500ms") plus "confirmed" state.',
     inputSchema: {
       device_id: z.string().describe('Unique digital device identifier (e.g. "lounge_d3").'),
       pulse_ms: z.number().int().describe("How long to hold it on, in milliseconds (e.g. 500)."),
@@ -234,7 +239,8 @@ server.registerTool(
       'Smoothly ramp (fade) an ANALOG device to a value over a duration. Use for requests like ' +
       '"fade the lounge lights to 50% over 3 seconds". Optionally start the fade after delay_ms ' +
       '("fade down in 30 seconds, over 2 seconds"). Analog devices only; digital and serial ' +
-      "devices don't ramp - use control_crestron_device for those (and for an instant analog set).",
+      "devices don't ramp - use control_crestron_device for those (and for an instant analog set). " +
+      'The result includes a "status" like "fading to 50000, ~3s left" plus "confirmed" state.',
     inputSchema: {
       device_id: z.string().describe('Unique device identifier (e.g. "lounge_a1").'),
       value: z.string().describe('Target analog value "0"-"65535".'),

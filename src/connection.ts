@@ -17,6 +17,14 @@ import * as crypto from "node:crypto";
 const PORTAL_URL = process.env.CRESTRON_PORTAL_URL || "https://solutionav.com.au/crestron-mcp/";
 const TRIAL_URL = process.env.CRESTRON_TRIAL_URL || "https://license.solutionav.com.au/trial";
 
+/** After a control action, read the device's STATE back so the result carries the real outcome.
+ *  The model reliably reads tool results but rarely queries on its own, so we push the feedback to
+ *  it. CRESTRON_CONFIRM=0 disables the read-back; CRESTRON_SETTLE_MS is how long to let an
+ *  immediate set's feedback join settle before reading (ramps/pulses/pending are tracked
+ *  server-side and read instantly, so they don't wait). */
+const CONFIRM = (process.env.CRESTRON_CONFIRM ?? "1") !== "0";
+const SETTLE_MS = Math.max(0, Number(process.env.CRESTRON_SETTLE_MS ?? 350) || 0);
+
 /** Render a millisecond duration as a short human phrase for the LLM ("2 days 4 hours"). */
 function humanizeMs(ms: number): string {
   if (ms <= 0) return "expired";
@@ -28,6 +36,61 @@ function humanizeMs(ms: number): string {
   if (h) parts.push(`${h} hour${h === 1 ? "" : "s"}`);
   if (!d && m) parts.push(`${m} minute${m === 1 ? "" : "s"}`);
   return parts.join(" ") || "under a minute";
+}
+
+/** Short duration phrase for in-flight actions: ms / seconds for sub-minute, else humanizeMs. */
+function humanizeShort(ms: number): string {
+  if (ms <= 0) return "now";
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  if (ms < 60000) {
+    const s = ms / 1000;
+    return `${s < 10 ? s.toFixed(1) : Math.round(s)}s`;
+  }
+  return humanizeMs(ms);
+}
+
+/** Loose value compare so an analog set ("50000") matches a numeric feedback (50000). */
+function valuesMatch(a: unknown, b: unknown): boolean {
+  const sa = String(a).trim();
+  const sb = String(b).trim();
+  if (sa === sb) return true;
+  const na = Number(sa);
+  const nb = Number(sb);
+  if (!Number.isNaN(na) && !Number.isNaN(nb)) return na === nb;
+  return false;
+}
+
+/** One-line, LLM-facing summary of a STATE read taken just after an action: in-flight (fading /
+ *  pulsing / scheduled) or settled (current value, flagged when it differs from what was set). */
+function summarizeState(state: Record<string, unknown>, commanded?: string): string {
+  if (!state || typeof state !== "object") return "state unavailable";
+  if (state.error) return `could not read back state: ${String(state.error)}`;
+
+  let pendingPart = "";
+  const p = state.pending as Record<string, unknown> | undefined;
+  if (p && typeof p === "object") {
+    const inMs = typeof p.in_ms === "number" ? ` in ~${humanizeShort(p.in_ms)}` : "";
+    const action = String(p.action ?? "set").toLowerCase();
+    pendingPart = `; scheduled to ${action} ${p.value ?? ""}${inMs}`.replace(/\s+$/, "");
+  }
+
+  const value = state.value;
+  if (state.state === "ramping") {
+    const rem = typeof state.remaining_ms === "number" ? `, ~${humanizeShort(state.remaining_ms)} left` : "";
+    return `fading to ${state.target ?? value ?? "?"}${rem}${pendingPart}`;
+  }
+  if (state.state === "pulsing") {
+    const rem = typeof state.remaining_ms === "number" ? `, releases in ~${humanizeShort(state.remaining_ms)}` : "";
+    return `pulsing${rem}${pendingPart}`;
+  }
+  // idle (settled)
+  if (value === undefined || value === null) {
+    return `set${pendingPart || " (no feedback wired to confirm)"}`;
+  }
+  if (commanded !== undefined && !valuesMatch(value, commanded)) {
+    return `feedback reads ${String(value)} (set ${commanded})${pendingPart}`;
+  }
+  return `now ${String(value)}${pendingPart}`;
 }
 
 /** Serializes async sections (mirrors the Python asyncio.Lock usage). */
@@ -96,12 +159,12 @@ export class CrestronConnection {
     return (
       `This Crestron processor (${this.host}) isn't licensed yet (${detail}).\n` +
       `Two options, both doable right here in chat:\n` +
-      `  • Free trial — ask me to start one and I'll call start_crestron_trial. ` +
+      `  • Free trial: ask me to start one and I'll call start_crestron_trial. ` +
       `Up to 3 one-week trials per processor; I'll tell you how many remain.\n` +
-      `  • Buy a license — get a key at ${buyUrl} (perpetual, AUD $249 inc GST), ` +
+      `  • Buy a license: get a key at ${buyUrl} (perpetual, AUD $249 inc GST), ` +
       `then paste it here and I'll activate it with activate_crestron_license.\n` +
       `Once licensed, the processor stays licensed for every client and across reboots. ` +
-      `Licensing only gates the natural-language layer — the AV system itself keeps running regardless.`
+      `Licensing only gates the natural-language layer; the AV system itself keeps running regardless.`
     );
   }
 
@@ -378,7 +441,7 @@ export class CrestronConnection {
    * Start a free 7-day trial on this processor. Reads the box's MAC, fetches a signed trial
    * license bound to it from the licensing server, and activates it on the box. The server caps
    * trials per processor (default 3); when they're used up it returns a buy link instead. The
-   * box never needs internet — this client (which always has it) relays the key via ACTIVATE.
+   * box never needs internet; this client (which always has it) relays the key via ACTIVATE.
    */
   async startTrial(): Promise<Record<string, unknown>> {
     const status = await this.licenseStatus();
@@ -430,6 +493,24 @@ export class CrestronConnection {
     };
   }
 
+  /** Read the device's STATE just after an action and summarize it for the LLM. settleMs lets an
+   *  immediate set's feedback join settle first; ramps/pulses/pending are server-tracked so they
+   *  pass 0. Never throws: a failed read-back is reported in the result, not fatal to the action. */
+  private async confirm(
+    deviceId: string,
+    settleMs: number,
+    commanded?: string,
+  ): Promise<{ state: Record<string, unknown>; status: string }> {
+    try {
+      if (settleMs > 0) await new Promise((r) => setTimeout(r, settleMs));
+      const state = await this.queryDevice(deviceId);
+      return { state, status: summarizeState(state, commanded) };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { state: { error: msg }, status: `could not read back state: ${msg}` };
+    }
+  }
+
   async setDevice(deviceId: string, value: string, delayMs = 0): Promise<Record<string, unknown>> {
     // delayMs > 0 -> SET_AFTER (the processor runs the set after the delay); else plain SET.
     const command = delayMs > 0 ? `SET_AFTER:${deviceId}:${delayMs}:${value}` : `SET:${deviceId}:${value}`;
@@ -440,6 +521,13 @@ export class CrestronConnection {
     if (response.startsWith("OK")) {
       const result: Record<string, unknown> = { success: true, device_id: deviceId, value };
       if (delayMs > 0) result.delay_ms = delayMs;
+      // Confirm: a delayed set is pending (server-tracked, read now); an immediate set needs a
+      // brief settle so the feedback join has moved before we read it back.
+      if (CONFIRM) {
+        const c = await this.confirm(deviceId, delayMs > 0 ? 0 : SETTLE_MS, delayMs > 0 ? undefined : value);
+        result.status = c.status;
+        result.confirmed = c.state;
+      }
       return result;
     }
     return { success: false, error: "Invalid response" };
@@ -492,6 +580,20 @@ export class CrestronConnection {
       }
     }
 
+    // Confirm each device that took, folding its live state into that entry. Settle once up front
+    // if any instant entries were sent (their feedback joins lag); timed entries read instantly.
+    if (CONFIRM && results.length > 0) {
+      if (instant.length > 0 && SETTLE_MS > 0) await new Promise((r) => setTimeout(r, SETTLE_MS));
+      for (const r of results) {
+        if (r.success === false) continue;
+        const id = String(r.id ?? "");
+        if (!id) continue;
+        const c = await this.confirm(id, 0);
+        r.status = c.status;
+        r.confirmed = c.state;
+      }
+    }
+
     return { success: true, results };
   }
 
@@ -524,6 +626,12 @@ export class CrestronConnection {
     if (response.startsWith("OK")) {
       const result: Record<string, unknown> = { success: true, device_id: deviceId, pulse_ms: pulseMs };
       if (delayMs > 0) result.delay_ms = delayMs;
+      // Pulse (and any pre-delay) is tracked server-side, so STATE reports it instantly: no settle.
+      if (CONFIRM) {
+        const c = await this.confirm(deviceId, 0);
+        result.status = c.status;
+        result.confirmed = c.state;
+      }
       return result;
     }
     return { success: false, error: "Invalid response" };
@@ -540,6 +648,13 @@ export class CrestronConnection {
     if (response.startsWith("OK")) {
       const result: Record<string, unknown> = { success: true, device_id: deviceId, value, duration_ms: durationMs };
       if (delayMs > 0) result.delay_ms = delayMs;
+      // The fade (or its scheduled start) is tracked server-side, so STATE shows "fading to X" /
+      // pending right away: no settle, and don't flag a mid-fade value as a mismatch.
+      if (CONFIRM) {
+        const c = await this.confirm(deviceId, 0);
+        result.status = c.status;
+        result.confirmed = c.state;
+      }
       return result;
     }
     return { success: false, error: "Invalid response" };

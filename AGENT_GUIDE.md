@@ -201,6 +201,31 @@ confirm state by reading; tell the user rather than assuming the command failed.
 (`state`/`pending`/ramp/pulse info comes from the processor itself, so it's accurate
 regardless of feedback wiring.)
 
+## Confirmation after an action
+
+Every `control_crestron_device`, `ramp_crestron_device`, `pulse_crestron_device`, and
+`set_crestron_devices` result already carries the outcome, so you usually do not need a
+separate query:
+
+- `status` - a short phrase: `"now 50000"`, `"fading to 0, ~10s left"`,
+  `"pulsing, releases in ~500ms"`, `"scheduled to set 1 in ~30s"`, or, on a
+  discrepancy, `"feedback reads 47000 (set 50000)"`.
+- `confirmed` - the full live state (the same shape `query_crestron_device` returns).
+
+Read these instead of assuming success. A mismatch in `status` (or `confirmed.value` not
+matching what you set) is real signal: surface it rather than reporting "done".
+
+One nuance for fades: the confirmation is taken the instant the action starts, so a ramp
+reports the in-flight picture (`"fading to X, ~Ns left"`) and its target, not the final
+resting value. That is deliberate (we never block for a multi-minute fade). To confirm a
+long fade actually landed, re-query after `remaining_ms` (or `completes_at`) has passed;
+the target in the status already tells you where it is heading.
+
+Tuning (host-side): an immediate set waits a short settle (~350ms) for the feedback join
+to move before reading back; ramps, pulses, and scheduled actions read instantly because
+the processor tracks them itself. The host can set `CRESTRON_SETTLE_MS`, or disable the
+read-back entirely with `CRESTRON_CONFIRM=0`.
+
 ## Time
 
 `get_crestron_time()` returns the processor's clock as `epoch_ms` and `iso`. You
@@ -221,7 +246,8 @@ Check `access` before trying to set a read-only device.
 1. `discover_crestron_system()` (or `list_crestron_rooms`) to learn the layout.
 2. `list_crestron_devices(room)` to get exact ids for the room you care about.
 3. Act with `control_crestron_device` / `ramp_crestron_device` using exact ids.
-4. Confirm with `query_crestron_device` where it matters (and feedback is wired).
+4. The action result already confirms the outcome (`status` / `confirmed`); query
+   separately only to re-check a long fade after it completes, or to read an unrelated device.
 5. Prefer the user's words mapped to discovered ids; never invent an id.
 
 ## Examples
