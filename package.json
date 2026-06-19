@@ -1,6 +1,6 @@
 {
   "name": "crestron-mcp",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "MCP server exposing a Crestron 4-Series AV system to Claude in natural language.",
   "type": "module",
   "bin": {

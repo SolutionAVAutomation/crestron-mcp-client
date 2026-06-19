@@ -18,7 +18,7 @@ import { loadConfig } from "./config.js";
 const cfg = loadConfig();
 const crestron = new CrestronConnection(cfg.host, cfg.port, cfg.auth, cfg.key, cfg.tls);
 
-const server = new McpServer({ name: "crestron-control", version: "1.8.0" });
+const server = new McpServer({ name: "crestron-control", version: "1.8.1" });
 
 const ok = (obj: unknown) => ({
   content: [{ type: "text" as const, text: JSON.stringify(obj, null, 2) }],
@@ -333,9 +333,10 @@ server.registerTool(
       "accurately (issued and counted online by the licensing server, then stored on the box) and do " +
       "not claim nothing happens online. Use it when the processor is unlicensed, or when a trial has " +
       "lapsed and the user wants to keep going. Each processor gets up to 3 one-week trials; this " +
-      "reports trials_remaining and the expiry after starting one. When the trials are used up it " +
-      "returns a buy link instead. The underlying AV keeps working regardless; licensing only gates " +
-      "this natural-language layer.",
+      "reports trials_remaining and the expiry after starting one. When the trials are used up the " +
+      "result carries buy_url (with the MAC pre-filled) and a next_step; present that full link to " +
+      "the user right away, don't wait to be asked for it. The underlying AV keeps working " +
+      "regardless; licensing only gates this natural-language layer.",
   },
   async () => {
     try {

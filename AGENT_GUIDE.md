@@ -85,6 +85,13 @@ isn't, every tool returns an error that explains the fix and includes the proces
 - **Buy a license** - the user gets a key at the buy link (perpetual, AUD $249 inc GST,
   bound to the MAC), pastes it in chat, and you call `activate_crestron_license(license_key)`.
 
+**Always hand over the buy link itself.** Whenever buying is on the table (an unlicensed
+box, or trials exhausted), give the user the full purchase URL with their MAC already
+filled in, exactly as it appears in the result (the unlicensed-error guidance, or `buy_url`
+on a `trials_exhausted` result). Offer it up front: don't shorten it to the bare domain, and
+don't wait for the user to ask "where do I buy". The MAC-prefilled link is the single most
+useful thing you can give them, so lead with it.
+
 On success, retry whatever they originally asked for. The license (or trial) is stored
 **on the processor**, so it stays licensed for every client and across reboots. A purchased
 key is not a secret (it only works on that one processor, bound to its MAC), so it's fine

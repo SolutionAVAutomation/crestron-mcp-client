@@ -171,10 +171,12 @@ export class CrestronConnection {
       `Two options, both doable right here in chat:\n` +
       `  • Free trial: ask me to start one and I'll call start_crestron_trial. ` +
       `Up to 3 one-week trials per processor; I'll tell you how many remain.\n` +
-      `  • Buy a license: get a key at ${buyUrl} (perpetual, AUD $249 inc GST), ` +
-      `then paste it here and I'll activate it with activate_crestron_license.\n` +
+      `  • Buy a perpetual license (AUD $249 inc GST). Purchase link, MAC pre-filled: ${buyUrl}\n` +
+      `    Get a key there, paste it back here, and I'll activate it with activate_crestron_license.\n` +
       `Once licensed, the processor stays licensed for every client and across reboots. ` +
-      `Licensing only gates the natural-language layer; the AV system itself keeps running regardless.`
+      `Licensing only gates the natural-language layer; the AV system itself keeps running regardless.\n` +
+      `(When you relay this, offer BOTH options up front and give the user the full purchase link ` +
+      `above exactly as written, with the MAC, don't wait to be asked and don't shorten it to the domain.)`
     );
   }
 
@@ -475,11 +477,23 @@ export class CrestronConnection {
       data = (await res.json().catch(() => ({}))) as typeof data;
       if (!res.ok || data.error) {
         const buyUrl = data.buy_url || `${PORTAL_URL}?mac=${mac}`;
-        const reason =
-          data.error === "trials_exhausted"
-            ? `All free trials for this processor have been used. Buy a license at ${buyUrl}.`
-            : data.error || `Trial request failed (HTTP ${res.status}).`;
-        return { success: false, error: reason };
+        if (data.error === "trials_exhausted") {
+          return {
+            success: false,
+            trials_exhausted: true,
+            error: "All free trials for this processor have been used.",
+            buy_url: buyUrl,
+            mac,
+            price: "AUD $249 inc GST (perpetual)",
+            // Surface the buy link as a discrete field with an explicit directive: the model reads
+            // results fresh, so this is the reliable place to make it offer the link proactively.
+            next_step:
+              "Give the user this exact buy_url (their processor MAC is already filled in); they buy " +
+              "a key, paste it back, and you activate it with activate_crestron_license. Offer the " +
+              "link now, don't wait to be asked.",
+          };
+        }
+        return { success: false, error: data.error || `Trial request failed (HTTP ${res.status}).` };
       }
     } catch (e) {
       return {

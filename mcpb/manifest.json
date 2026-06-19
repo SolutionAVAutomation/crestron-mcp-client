@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "crestron-mcp",
   "display_name": "Crestron Control",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Query and control a Crestron 4-Series AV system in natural language.",
   "long_description": "Connects Claude to a Crestron 4-Series processor running the CrestronMCP modules. Lets you discover rooms and devices, read and set lighting, AV, HVAC and shades, and smoothly ramp analog levels - all in plain English. Talks to the processor over the CrestronMCP text protocol, with optional password (mode 1) or secure-key + TLS (mode 2) authentication.",
   "author": {
