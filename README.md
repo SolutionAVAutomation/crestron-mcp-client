@@ -7,7 +7,7 @@ exposing the system as MCP tools over stdio. It speaks the CrestronMCP text prot
 (see [`PROTOCOL.md`](PROTOCOL.md)) over TCP, with secure-key + TLS authentication.
 
 The client is **free**. Controlling a processor requires that processor to be licensed
-(or on a free trial) — see [Licensing](#licensing). One processor licence is AUD $249
+(or on a free trial). See [Licensing](#licensing). One processor licence is AUD $249
 (inc GST); each processor also gets three free 1-week trials. Get a licence at
 <https://solutionav.com.au/crestron-mcp/>.
 
@@ -19,7 +19,7 @@ Download `crestron-mcp.mcpb` from <https://solutionav.com.au/crestron-mcp/> and 
 (shown on the MCP Server Config module's `Key` output); the port defaults to `50794`.
 
 ### Claude Code / other MCP hosts
-No download needed — run it straight from npm:
+No download needed. Run it straight from npm:
 
 ```bash
 claude mcp add crestron \
@@ -58,8 +58,8 @@ The processor must be licensed before it accepts control or query commands. If i
 every tool returns guidance that includes the processor's **activation code (its MAC)**.
 Two ways forward, both in chat:
 
-- **Free trial** — `start_crestron_trial` (no payment; up to 3 × 1 week per processor).
-- **Buy** — get a key for that MAC at <https://solutionav.com.au/crestron-mcp/>, paste it
+- **Free trial**: `start_crestron_trial` (no payment; up to 3 × 1 week per processor).
+- **Buy**: get a key for that MAC at <https://solutionav.com.au/crestron-mcp/>, paste it
   in chat, and the assistant calls `activate_crestron_license`.
 
 The licence is stored **on the processor** (bound to its MAC), so it persists across
@@ -77,5 +77,5 @@ npm run mcpb       # build the Claude Desktop .mcpb (needs bun)
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE). (The client is open; the product is the per-processor
+MIT. See [`LICENSE`](LICENSE). (The client is open; the product is the per-processor
 licence on the box.)

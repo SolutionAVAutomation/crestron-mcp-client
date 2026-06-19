@@ -156,7 +156,7 @@ persists the same way. Two differences from a perpetual license:
   with no timer, after which gated commands return `ERROR:1011` again.
 - A lapsed trial only re-gates the MCP layer; the underlying control program is unaffected.
 
-The cap (default 3 trials per processor) is enforced by the **licensing server**, not the box — the
+The cap (default 3 trials per processor) is enforced by the **licensing server**, not the box; the
 box only knows "valid until `<expiry>`". The MCP client's `start_crestron_trial` tool fetches a
 signed trial from the server and relays it via `ACTIVATE`.
 
