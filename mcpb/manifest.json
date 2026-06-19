@@ -1,0 +1,76 @@
+{
+  "manifest_version": "0.2",
+  "name": "crestron-mcp",
+  "display_name": "Crestron Control",
+  "version": "1.7.0",
+  "description": "Query and control a Crestron 4-Series AV system in natural language.",
+  "long_description": "Connects Claude to a Crestron 4-Series processor running the CrestronMCP modules. Lets you discover rooms and devices, read and set lighting, AV, HVAC and shades, and smoothly ramp analog levels - all in plain English. Talks to the processor over the CrestronMCP text protocol, with optional password (mode 1) or secure-key + TLS (mode 2) authentication.",
+  "author": {
+    "name": "Solution AV Automation"
+  },
+  "license": "UNLICENSED",
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.mjs"],
+      "env": {
+        "CRESTRON_HOST": "${user_config.host}",
+        "CRESTRON_PORT": "${user_config.port}",
+        "CRESTRON_KEY": "${user_config.key}",
+        "CRESTRON_AUTH": "${user_config.password}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "discover_crestron_system", "description": "Discover rooms, categories, and device counts in the Crestron system." },
+    { "name": "list_crestron_rooms", "description": "List all rooms with their device counts." },
+    { "name": "list_crestron_devices", "description": "List controllable devices, optionally filtered by room and/or category." },
+    { "name": "query_crestron_device", "description": "Get the live state of a device: value plus whether it is idle, ramping (target + completes_at), or pulsing (releases_at), and any pending scheduled action." },
+    { "name": "get_crestron_time", "description": "Get the processor's current time as epoch milliseconds and ISO 8601." },
+    { "name": "control_crestron_device", "description": "Set a device's value (digital, analog, or serial), optionally after a delay." },
+    { "name": "set_crestron_devices", "description": "Set multiple devices at once in one round trip - for scenes/macros." },
+    { "name": "pulse_crestron_device", "description": "Momentarily pulse a digital device on then off (a simulated button press), optionally after a delay." },
+    { "name": "ramp_crestron_device", "description": "Smoothly ramp (fade) an analog device to a value over a duration." },
+    { "name": "cancel_crestron_device", "description": "Stop a ramp/pulse in progress and clear any pending delayed action on a device, without otherwise changing its value." },
+    { "name": "get_room_status", "description": "Get the status of every device in a room." },
+    { "name": "activate_crestron_license", "description": "Activate (license) the processor with a key the user provides, when a command reports the processor is unlicensed. One-time; stored on the processor." },
+    { "name": "get_crestron_license_status", "description": "Check the processor's license/trial state: licensed now, whether it's a time-limited trial, remaining trial time, MAC, and a buy URL." },
+    { "name": "start_crestron_trial", "description": "Start a free 7-day trial on the processor (no payment). Up to 3 per processor; reports how many remain, or a buy link when used up." }
+  ],
+  "user_config": {
+    "host": {
+      "type": "string",
+      "title": "Processor address",
+      "description": "IP address or hostname of the Crestron processor on your network (e.g. 10.0.1.38).",
+      "required": true
+    },
+    "port": {
+      "type": "number",
+      "title": "Port",
+      "description": "TCP port the CrestronMCP server listens on.",
+      "default": 50794,
+      "required": false
+    },
+    "key": {
+      "type": "string",
+      "title": "Secure key",
+      "description": "Recommended. The processor's secure key, shown on the MCP Server Config module's Key output. Setting it turns on encryption (TLS) and secure authentication automatically. Leave blank only if your processor is in open or password mode.",
+      "sensitive": true,
+      "required": false
+    },
+    "password": {
+      "type": "string",
+      "title": "Password (only for password mode)",
+      "description": "Use this only if your processor is set to password mode. Leave blank otherwise. Ignored when a secure key is set.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "name": "crestron-mcp",
+  "version": "1.7.0",
+  "description": "MCP server exposing a Crestron 4-Series AV system to Claude in natural language.",
+  "type": "module",
+  "bin": {
+    "crestron-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "mcpb/manifest.json",
+    "AGENT_GUIDE.md",
+    "PROTOCOL.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "bundle": "bun build src/index.ts --target=node --format=esm --outfile mcpb/server/index.mjs",
+    "mcpb": "npm run bundle && mcpb pack mcpb crestron-mcp.mcpb",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SolutionAVAutomation/crestron-mcp-client.git"
+  },
+  "homepage": "https://solutionav.com.au/crestron-mcp/",
+  "bugs": {
+    "url": "https://github.com/SolutionAVAutomation/crestron-mcp-client/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "crestron",
+    "claude",
+    "av",
+    "automation",
+    "home-automation"
+  ],
+  "author": "Solution AV Automation Pty Ltd",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@anthropic-ai/mcpb": "^2.1.2",
+    "@types/node": "^25.9.3",
+    "bun": "^1.3.14",
+    "typescript": "^6.0.3"
+  }
+}
