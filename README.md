@@ -14,7 +14,7 @@ The client is **free**. Controlling a processor requires that processor to be li
 ## Install
 
 ### Claude Desktop (recommended)
-Download `crestron-mcp.mcpb` from <https://solutionav.com.au/crestron-mcp/> and open it
+Download `mcp-for-crestron.mcpb` from <https://solutionav.com.au/crestron-mcp/> and open it
 (or Settings → Extensions → Install). Enter the processor's address and its secure key
 (shown on the MCP Server Config module's `Key` output); the port defaults to `50794`.
 
@@ -25,7 +25,7 @@ No download needed. Run it straight from npm:
 claude mcp add crestron \
   --env CRESTRON_HOST=10.0.1.38 \
   --env CRESTRON_KEY=<the processor's secure key> \
-  -- npx -y crestron-mcp
+  -- npx -y mcp-for-crestron
 ```
 
 ## Configuration

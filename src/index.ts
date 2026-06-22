@@ -351,12 +351,12 @@ async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error(
-    `crestron-mcp: ready (target ${cfg.host}:${cfg.port}, ` +
+    `mcp-for-crestron: ready (target ${cfg.host}:${cfg.port}, ` +
       `${cfg.key ? "mode 2 key" : cfg.auth ? "mode 1 password" : "open"}${cfg.tls ? " + TLS" : ""})`,
   );
 }
 
 main().catch((e) => {
-  console.error("crestron-mcp: fatal", e);
+  console.error("mcp-for-crestron: fatal", e);
   process.exit(1);
 });

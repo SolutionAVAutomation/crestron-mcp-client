@@ -1,6 +1,6 @@
 {
   "manifest_version": "0.2",
-  "name": "crestron-mcp",
+  "name": "mcp-for-crestron",
   "display_name": "MCP for Crestron",
   "version": "1.8.1",
   "description": "Query and control a Crestron 4-Series AV system in natural language.",

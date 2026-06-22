@@ -1,10 +1,10 @@
 {
-  "name": "crestron-mcp",
+  "name": "mcp-for-crestron",
   "version": "1.8.1",
   "description": "MCP for Crestron: talk to a Crestron 4-Series AV system through Claude in natural language.",
   "type": "module",
   "bin": {
-    "crestron-mcp": "dist/index.js"
+    "mcp-for-crestron": "dist/index.js"
   },
   "main": "dist/index.js",
   "files": [
@@ -20,7 +20,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "bundle": "bun build src/index.ts --target=node --format=esm --outfile mcpb/server/index.mjs",
-    "mcpb": "npm run bundle && mcpb pack mcpb crestron-mcp.mcpb",
+    "mcpb": "npm run bundle && mcpb pack mcpb mcp-for-crestron.mcpb",
     "prepublishOnly": "npm run build"
   },
   "repository": {
