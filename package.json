@@ -1,7 +1,7 @@
 {
   "name": "crestron-mcp",
   "version": "1.8.1",
-  "description": "MCP server exposing a Crestron 4-Series AV system to Claude in natural language.",
+  "description": "MCP for Crestron: talk to a Crestron 4-Series AV system through Claude in natural language.",
   "type": "module",
   "bin": {
     "crestron-mcp": "dist/index.js"
@@ -25,11 +25,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SolutionAVAutomation/crestron-mcp-client.git"
+    "url": "git+https://github.com/SolutionAVAutomation/mcp-for-crestron-client.git"
   },
   "homepage": "https://solutionav.com.au/crestron-mcp/",
   "bugs": {
-    "url": "https://github.com/SolutionAVAutomation/crestron-mcp-client/issues"
+    "url": "https://github.com/SolutionAVAutomation/mcp-for-crestron-client/issues"
   },
   "keywords": [
     "mcp",

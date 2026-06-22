@@ -1,9 +1,9 @@
-# CrestronMCP client
+# MCP for Crestron client
 
 Control a Crestron 4-Series AV system from Claude, in natural language. This is the
-client half of [CrestronMCP](https://solutionav.com.au/crestron-mcp/): an MCP server
-that connects Claude (Desktop or Code) to a processor running the CrestronMCP modules,
-exposing the system as MCP tools over stdio. It speaks the CrestronMCP text protocol
+client half of [MCP for Crestron](https://solutionav.com.au/crestron-mcp/): an MCP server
+that connects Claude (Desktop or Code) to a processor running the MCP for Crestron modules,
+exposing the system as MCP tools over stdio. It speaks the MCP for Crestron text protocol
 (see [`PROTOCOL.md`](PROTOCOL.md)) over TCP, with secure-key + TLS authentication.
 
 The client is **free**. Controlling a processor requires that processor to be licensed
@@ -79,3 +79,8 @@ npm run mcpb       # build the Claude Desktop .mcpb (needs bun)
 
 MIT. See [`LICENSE`](LICENSE). (The client is open; the product is the per-processor
 licence on the box.)
+
+## Trademark
+
+Crestron is a registered trademark of Crestron Electronics, Inc.; MCP for Crestron is a
+product of Solution AV Automation, not affiliated with or endorsed by Crestron.

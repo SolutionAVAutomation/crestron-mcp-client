@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Crestron MCP Server (Node/TypeScript)
+ * MCP for Crestron client (Node/TypeScript)
  *
  * Exposes a Crestron 4-Series system to Claude over MCP. Connects to the
  * processor (or the simulator) using the text protocol in PROTOCOL.md.

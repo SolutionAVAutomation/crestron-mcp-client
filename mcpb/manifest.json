@@ -1,10 +1,10 @@
 {
   "manifest_version": "0.2",
   "name": "crestron-mcp",
-  "display_name": "Crestron Control",
+  "display_name": "MCP for Crestron",
   "version": "1.8.1",
   "description": "Query and control a Crestron 4-Series AV system in natural language.",
-  "long_description": "Connects Claude to a Crestron 4-Series processor running the CrestronMCP modules. Lets you discover rooms and devices, read and set lighting, AV, HVAC and shades, and smoothly ramp analog levels - all in plain English. Talks to the processor over the CrestronMCP text protocol, with optional password (mode 1) or secure-key + TLS (mode 2) authentication.",
+  "long_description": "Connects Claude to a Crestron 4-Series processor running the MCP for Crestron modules. Lets you discover rooms and devices, read and set lighting, AV, HVAC and shades, and smoothly ramp analog levels, all in plain English. Talks to the processor over the MCP for Crestron text protocol, with optional password (mode 1) or secure-key + TLS (mode 2) authentication. Crestron is a registered trademark of Crestron Electronics, Inc.; MCP for Crestron is a product of Solution AV Automation, not affiliated with or endorsed by Crestron.",
   "author": {
     "name": "Solution AV Automation"
   },
@@ -49,7 +49,7 @@
     "port": {
       "type": "number",
       "title": "Port",
-      "description": "TCP port the CrestronMCP server listens on.",
+      "description": "TCP port the MCP for Crestron server listens on.",
       "default": 50794,
       "required": false
     },
