@@ -580,15 +580,29 @@ export class CrestronConnection {
     const hasDel = (a: { delay_ms?: number }) => typeof a.delay_ms === "number" && a.delay_ms > 0;
     const instant = assignments.filter((a) => !hasDur(a) && !hasDel(a));
     const timed = assignments.filter((a) => hasDur(a) || hasDel(a));
+    // BATCH_SET separates its pairs with commas, so a value containing a comma can't ride the
+    // batch. Batch the comma-free values (one round trip); send any comma-bearing value as its
+    // own SET (the single-set path is comma-safe). Result shape is identical either way.
+    const batchable = instant.filter((a) => !a.value.includes(","));
+    const solo = instant.filter((a) => a.value.includes(","));
 
-    if (instant.length > 0) {
-      const pairs = instant.map((a) => `${a.device_id}:${a.value}`).join(",");
+    if (batchable.length > 0) {
+      const pairs = batchable.map((a) => `${a.device_id}:${a.value}`).join(",");
       const resp = await this.sendCommand(`BATCH_SET:${pairs}`);
       if (resp.startsWith("DATA:")) {
         for (const r of JSON.parse(resp.slice(5)) as Array<Record<string, unknown>>) results.push(r);
       } else {
         const err = this.formatError(resp);
-        for (const a of instant) results.push({ id: a.device_id, success: false, error: err });
+        for (const a of batchable) results.push({ id: a.device_id, success: false, error: err });
+      }
+    }
+
+    for (const a of solo) {
+      const resp = await this.sendCommand(`SET:${a.device_id}:${a.value}`);
+      if (resp.startsWith("OK")) {
+        results.push({ id: a.device_id, success: true, value: a.value });
+      } else {
+        results.push({ id: a.device_id, success: false, error: this.formatError(resp) });
       }
     }
 
