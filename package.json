@@ -1,6 +1,6 @@
 {
   "name": "mcp-for-crestron",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "MCP for Crestron: talk to a Crestron 4-Series AV system through Claude in natural language. Not affiliated with Crestron.",
   "type": "module",
   "bin": {
